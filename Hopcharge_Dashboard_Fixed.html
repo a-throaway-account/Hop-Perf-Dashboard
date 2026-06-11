@@ -1,0 +1,1541 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hopcharge · Meta Ads Performance Dashboard (Consolidated)</title>
+<style>
+  :root {
+    --navy: #0a2540; --navy-deep: #061826;
+    --teal: #0d9488; --teal-dark: #0f766e; --teal-med: #14b8a6;
+    --mint: #2dd4bf; --mint-light: #5eead4;
+    --bg: #f1f5f9; --card: #ffffff; --border: #e2e8f0;
+    --text: #0f172a; --text-med: #475569; --text-muted: #94a3b8;
+    --qualified: #10b981; --unqualified: #ef4444; --offtopic: #f59e0b;
+    --tata: #6366f1; --nontata: #14b8a6; --unk: #cbd5e1;
+    --indigo: #4f46e5; --amber: #f59e0b; --rose: #f43f5e; --violet: #8b5cf6;
+    --shadow: 0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5;
+  }
+
+  /* ===== Header ===== */
+  .topbar {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-deep) 100%);
+    color: #fff; padding: 24px 32px; position: relative; overflow: hidden;
+  }
+  .topbar::before {
+    content: ""; position: absolute; right: -80px; top: -80px;
+    width: 320px; height: 320px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(45,212,191,.18) 0%, transparent 70%);
+  }
+  .topbar h1 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 28px; font-weight: 700; margin: 0; letter-spacing: -0.5px;
+  }
+  .topbar .subtitle { color: var(--mint-light); font-style: italic; font-size: 14px; margin-top: 4px; }
+  .brand-tag {
+    display: inline-block; background: var(--mint); color: var(--navy);
+    font-size: 10px; font-weight: 800; letter-spacing: 3px;
+    padding: 3px 10px; border-radius: 2px; margin-bottom: 10px;
+  }
+
+  /* ===== Filters ===== */
+  .filters {
+    background: var(--card); border-bottom: 1px solid var(--border);
+    padding: 16px 32px; display: flex; flex-wrap: wrap; gap: 22px;
+    box-shadow: var(--shadow); position: sticky; top: 0; z-index: 10;
+    align-items: flex-end;
+  }
+  .filter-group { display: flex; flex-direction: column; gap: 6px; }
+  .filter-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+    color: var(--text-muted); text-transform: uppercase;
+  }
+  .pill-group { display: flex; gap: 4px; flex-wrap: wrap; }
+  .pill {
+    background: #f8fafc; border: 1px solid var(--border); color: var(--text-med);
+    padding: 7px 14px; font-size: 13px; font-weight: 600;
+    border-radius: 20px; cursor: pointer; transition: all 0.15s ease;
+    user-select: none;
+  }
+  .pill:hover { background: #f1f5f9; border-color: var(--teal-med); color: var(--teal-dark); }
+  .pill.active {
+    background: var(--navy); color: #fff; border-color: var(--navy);
+    box-shadow: 0 2px 8px rgba(10,37,64,.25);
+  }
+  .filter-select {
+    background: #fff; border: 1px solid var(--border); border-radius: 20px;
+    padding: 7px 14px; font-size: 13px; font-weight: 600; color: var(--text);
+    cursor: pointer; outline: none; min-width: 160px;
+    font-family: inherit;
+  }
+  .filter-select:focus { border-color: var(--teal); }
+
+  /* Date slider */
+  .date-slider-group { min-width: 340px; flex: 1; max-width: 460px; }
+  .slider-wrap { position: relative; height: 44px; padding: 18px 8px 8px; }
+  .slider-track { position: absolute; left: 8px; right: 8px; top: 26px; height: 4px; background: var(--border); border-radius: 2px; }
+  .slider-range { position: absolute; top: 26px; height: 4px; background: linear-gradient(90deg, var(--teal-med), var(--mint)); border-radius: 2px; }
+  .slider-wrap input[type="range"] { -webkit-appearance: none; appearance: none; position: absolute; left: 0; right: 0; top: 18px; width: 100%; height: 22px; background: transparent; pointer-events: none; margin: 0; }
+  .slider-wrap input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 3px solid var(--teal); cursor: pointer; pointer-events: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .slider-wrap input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 3px solid var(--teal); cursor: pointer; pointer-events: auto; }
+  .slider-labels { display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; color: var(--text-med); padding: 0 4px; }
+
+  /* ===== Layout ===== */
+  .container { padding: 24px 32px 48px; max-width: 1600px; margin: 0 auto; }
+
+  /* ===== KPI tiles ===== */
+  .kpi-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin-bottom: 12px; }
+  .kpi { background: var(--card); border-radius: 10px; padding: 16px 18px; box-shadow: var(--shadow); border-top: 3px solid var(--teal); position: relative; }
+  .kpi.spend     { border-top-color: var(--teal-dark); }
+  .kpi.leads     { border-top-color: var(--mint); }
+  .kpi.qualrate  { border-top-color: var(--qualified); }
+  .kpi.p1leads   { border-top-color: var(--rose); }
+  .kpi.renewals  { border-top-color: var(--amber); }
+  .kpi.sales     { border-top-color: var(--qualified); }
+  .kpi.delta     { border-top-color: var(--violet); }
+  .kpi.repetitive { border-top-color: var(--amber); }
+  .kpi.metaleads { border-top-color: var(--rose); }
+  .kpi-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; }
+  .kpi-value { font-family: Georgia, serif; font-size: 28px; font-weight: 700; color: var(--text); line-height: 1.1; margin-top: 6px; }
+  .kpi-sub { font-size: 11px; color: var(--text-med); margin-top: 4px; }
+  .kpi-split { display: flex; gap: 10px; margin-top: 8px; font-size: 11px; flex-wrap: wrap; }
+  .kpi-split span { display: flex; align-items: center; gap: 4px; }
+  .kpi-split .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .kpi-row-secondary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+
+  /* ===== Row layouts ===== */
+  .row { display: grid; gap: 16px; margin-bottom: 16px; }
+  .row.r1 { grid-template-columns: 1.55fr 1fr; }
+  .row.r2 { grid-template-columns: 1fr 1fr; }
+  .row.r3 { grid-template-columns: 1fr; }
+  @media (max-width: 1100px) {
+    .row.r1, .row.r2 { grid-template-columns: 1fr; }
+    .kpi-row, .kpi-row-secondary { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .card { background: var(--card); border-radius: 10px; padding: 20px 22px; box-shadow: var(--shadow); min-height: 100px; }
+  .card h3 { font-family: Georgia, serif; font-size: 18px; font-weight: 700; color: var(--navy); margin: 0 0 4px; }
+  .card .sub { font-size: 12px; color: var(--text-med); font-style: italic; margin-bottom: 14px; }
+
+  /* ===== Waterfall ===== */
+  .wf-stage { margin-bottom: 12px; }
+  .wf-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+  .wf-name { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-med); text-transform: uppercase; }
+  .wf-val { font-family: Georgia, serif; font-size: 18px; font-weight: 700; color: var(--text); }
+  .wf-bar-wrap { height: 30px; background: #f1f5f9; border-radius: 4px; overflow: hidden; display: flex; position: relative; }
+  .wf-bar { height: 100%; display: flex; align-items: center; color: #fff; font-size: 11px; font-weight: 700; padding: 0 8px; transition: width 0.4s ease; white-space: nowrap; overflow: hidden; }
+  .wf-bar.spend  { background: var(--teal-dark); }
+  .wf-bar.reach  { background: var(--teal); }
+  .wf-bar.clicks { background: var(--teal-med); }
+  .wf-bar.tata { background: var(--tata); }
+  .wf-bar.nontata { background: var(--nontata); }
+  .wf-bar.unk { background: var(--unk); color: var(--text-med); }
+  .wf-arrow { text-align: center; font-size: 10px; color: var(--text-muted); margin: 2px 0 4px; font-weight: 600; }
+  .wf-arrow::before { content: "▼  "; color: var(--text-muted); }
+  .wf-conv { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 700; display: inline-block; margin-left: 4px; }
+
+  /* ===== Donut ===== */
+  .donut-wrap { display: flex; align-items: center; gap: 20px; }
+  .donut-svg-wrap { position: relative; flex-shrink: 0; }
+  .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
+  .donut-center .v { font-family: Georgia, serif; font-weight: 700; font-size: 24px; color: var(--navy); line-height: 1; }
+  .donut-center .l { font-size: 10px; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; }
+  .donut-legend { flex: 1; }
+  .donut-legend-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); align-items: center; }
+  .donut-legend-row:last-child { border-bottom: none; }
+  .donut-legend-row .label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); }
+  .donut-legend-row .dot { width: 12px; height: 12px; border-radius: 3px; }
+  .donut-legend-row .val { font-family: Georgia, serif; font-size: 16px; font-weight: 700; color: var(--text); }
+  .donut-legend-row .pct { color: var(--text-med); font-size: 11px; font-weight: 600; margin-left: 6px; }
+
+  /* ===== Vs grid ===== */
+  .vs-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .vs-col { background: #f8fafc; border-radius: 8px; padding: 14px; border: 1px solid var(--border); }
+  .vs-col.tata { border-top: 3px solid var(--tata); }
+  .vs-col.nontata { border-top: 3px solid var(--nontata); }
+  .vs-col.unk { border-top: 3px solid var(--unk); }
+  .vs-col h4 { margin: 0 0 10px; font-size: 12px; letter-spacing: 1.5px; font-weight: 800; color: var(--text-med); text-transform: uppercase; }
+  .vs-col .stat-row { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #e2e8f0; }
+  .vs-col .stat-row:last-child { border-bottom: none; }
+  .vs-col .stat-row .sl { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+  .vs-col .stat-row .sv { font-family: Georgia, serif; font-size: 18px; font-weight: 700; color: var(--text); }
+
+  /* ===== Attribution path cards ===== */
+  .path-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 8px; }
+  .path-card { background: #f8fafc; border-radius: 8px; padding: 14px 16px; border-left: 4px solid var(--teal); position: relative; cursor: pointer; transition: transform 0.12s ease, box-shadow 0.12s ease; }
+  .path-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(15,23,42,0.08); }
+  .path-card.selected { outline: 2px solid var(--teal); background: #f0fdfa; }
+  .path-card.selected::after { content: "✓ Filtering sales below"; position: absolute; top: 8px; right: 12px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; color: var(--teal-dark); text-transform: uppercase; }
+  .path-card.p1 { border-left-color: var(--indigo); }
+  .path-card.p2 { border-left-color: var(--teal); }
+  .path-card.p3 { border-left-color: var(--violet); }
+  .path-card.p4 { border-left-color: var(--mint); }
+  .path-card.p5 { border-left-color: var(--rose); }
+  .path-card.p6 { border-left-color: var(--amber); }
+  .path-card .path-flow { font-size: 12px; font-weight: 700; color: var(--text-med); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
+  .path-card .path-count { font-family: Georgia, serif; font-size: 24px; font-weight: 700; color: var(--text); display: flex; align-items: baseline; gap: 8px; }
+  .path-card .path-pct { font-size: 11px; color: var(--text-med); font-weight: 600; }
+  .path-card .path-tata { margin-top: 6px; font-size: 11px; color: var(--text-med); display: flex; gap: 12px; }
+  .path-card .path-tata .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+
+  .path-filter-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+  .path-select { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 13px; font-weight: 600; color: var(--text); font-family: inherit; cursor: pointer; min-width: 280px; outline: none; }
+  .path-select:focus { border-color: var(--teal); }
+  .path-clear { background: transparent; border: 1px solid var(--border); border-radius: 6px; padding: 7px 12px; font-size: 12px; font-weight: 600; color: var(--text-med); cursor: pointer; transition: all 0.15s; }
+  .path-clear:hover { border-color: var(--unqualified); color: var(--unqualified); }
+
+  .csv-btn { background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 11px; font-weight: 700; color: var(--teal-dark); cursor: pointer; transition: all 0.15s; letter-spacing: 0.5px; text-transform: uppercase; }
+  .csv-btn:hover { border-color: var(--teal); background: #f0fdfa; }
+
+  /* ===== Plan donut ===== */
+  .plan-donut-wrap { display: flex; gap: 18px; align-items: flex-start; }
+  .plan-donut-svg { flex-shrink: 0; }
+  .plan-donut-legend { flex: 1; max-height: 280px; overflow-y: auto; font-size: 12px; padding-right: 4px; }
+  .plan-donut-legend-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px dotted var(--border); gap: 8px; }
+  .plan-donut-legend-row:last-child { border-bottom: none; }
+  .plan-donut-legend-row .lbl { display: flex; align-items: center; gap: 7px; flex: 1; min-width: 0; color: var(--text); }
+  .plan-donut-legend-row .lbl .dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .plan-donut-legend-row .lbl .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; font-size: 12px; }
+  .plan-donut-legend-row .v { font-family: Georgia, serif; font-weight: 700; color: var(--text); white-space: nowrap; font-size: 13px; }
+  .plan-donut-legend-row .p { color: var(--text-muted); font-size: 10.5px; font-weight: 600; margin-left: 4px; }
+
+  /* ===== Trend ===== */
+  .chart-wrap { position: relative; width: 100%; }
+  .trend-tooltip {
+    position: absolute; background: rgba(10,37,64,0.96); color: #fff;
+    padding: 10px 14px; border-radius: 8px; font-size: 12px;
+    pointer-events: none; transform: translate(-50%, -100%);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    opacity: 0; transition: opacity 0.12s ease;
+    z-index: 5; white-space: nowrap;
+  }
+  .trend-tooltip.show { opacity: 1; }
+  .trend-tooltip .tt-title { font-weight: 700; margin-bottom: 6px; color: var(--mint-light); letter-spacing: 0.5px; }
+  .trend-tooltip .tt-row { display: flex; justify-content: space-between; gap: 16px; font-size: 11.5px; padding: 2px 0; }
+  .trend-tooltip .tt-row .k { color: rgba(255,255,255,0.65); display: flex; align-items: center; gap: 6px; }
+  .trend-tooltip .tt-row .k .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .trend-tooltip .tt-row .v { font-weight: 700; color: #fff; font-family: Georgia, serif; }
+
+  /* ===== Sales table ===== */
+  .sales-table-wrap { overflow-x: auto; max-height: 480px; overflow-y: auto; margin-top: 4px; }
+  .sales-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .sales-table thead th { text-align: left; font-size: 10px; font-weight: 800; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; padding: 10px 12px; border-bottom: 2px solid var(--border); background: #f8fafc; position: sticky; top: 0; }
+  .sales-table tbody td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+  .sales-table tbody tr:hover { background: #f8fafc; }
+  .sales-table .idx { color: var(--text-muted); font-size: 11px; width: 30px; }
+  .sales-table .nm { font-weight: 600; }
+  .sales-table .ph { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; color: var(--text-med); }
+  .sales-table .pl { font-weight: 600; color: var(--teal-dark); }
+  .sales-table .dt { color: var(--text-med); font-size: 12.5px; white-space: nowrap; }
+  .sales-table .pa { font-size: 11px; color: var(--text-med); }
+  .seg-badge { display: inline-block; padding: 3px 9px; border-radius: 12px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px; }
+  .seg-badge.tata { background: rgba(99,102,241,0.12); color: var(--tata); }
+  .seg-badge.nontata { background: rgba(20,184,166,0.12); color: var(--nontata); }
+
+  /* ===== Disclaimers ===== */
+  .disclaimers { background: var(--card); border-radius: 10px; padding: 22px 28px; box-shadow: var(--shadow); margin-top: 16px; border-left: 4px solid var(--mint); }
+  .disclaimers h4 { font-family: Georgia, serif; font-size: 15px; font-weight: 700; color: var(--navy); margin: 0 0 12px; letter-spacing: 0.3px; }
+  .disclaimers ol { margin: 0; padding-left: 20px; color: var(--text-med); font-size: 12.5px; line-height: 1.7; }
+  .disclaimers ol > li { margin-bottom: 10px; }
+  .disclaimers ol > li:last-child { margin-bottom: 0; }
+  .disclaimers ul { margin: 6px 0 4px; padding-left: 20px; list-style: disc; }
+  .disclaimers strong { color: var(--text); font-weight: 700; }
+  .disclaimers em { font-style: italic; color: var(--teal-dark); font-weight: 600; }
+
+  .footnote { font-size: 11px; color: var(--text-muted); font-style: italic; margin-top: 8px; }
+  .empty-state { padding: 32px; text-align: center; color: var(--text-muted); font-style: italic; background: #f8fafc; border-radius: 6px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand-tag">HOPCHARGE</div>
+  <h1>Meta Ads Performance Dashboard <span style="font-size:14px;font-family:Calibri;font-weight:600;letter-spacing:2px;color:var(--mint);background:rgba(45,212,191,0.15);padding:4px 12px;border-radius:4px;margin-left:12px;vertical-align:middle;">CONSOLIDATED</span></h1>
+  <div class="subtitle">Spend → Sales · multi-touch attribution · <strong style="color:#fff;">Booking + Full Payment rows merged into single entries</strong> · first-touch retained, plan value summed</div>
+</div>
+
+<div class="filters" id="filters">
+  <div class="filter-group">
+    <div class="filter-label">Date Range</div>
+    <div class="pill-group" data-dim="period"></div>
+  </div>
+  <div class="filter-group date-slider-group">
+    <div class="filter-label">Custom Date Range</div>
+    <div class="slider-wrap">
+      <div class="slider-track"></div>
+      <div class="slider-range" id="sliderRange"></div>
+      <input type="range" id="sliderMin" min="0" max="100" value="0" step="1" />
+      <input type="range" id="sliderMax" min="0" max="100" value="100" step="1" />
+    </div>
+    <div class="slider-labels">
+      <span id="sliderMinLbl">—</span>
+      <span id="sliderMaxLbl">—</span>
+    </div>
+  </div>
+  <div class="filter-group">
+    <div class="filter-label">Location</div>
+    <div class="pill-group" data-dim="location"></div>
+  </div>
+  <div class="filter-group">
+    <div class="filter-label">AI Quality</div>
+    <div class="pill-group" data-dim="qual"></div>
+  </div>
+  <div class="filter-group">
+    <div class="filter-label">Campaign Segment</div>
+    <div class="pill-group" data-dim="camp"></div>
+  </div>
+  <div class="filter-group">
+    <div class="filter-label">First Touch Source</div>
+    <select id="firstSrcFilter" class="filter-select"></select>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Primary KPI tiles -->
+  <div class="kpi-row" id="kpiRow"></div>
+
+  <!-- Secondary KPI tiles -->
+  <div class="kpi-row-secondary" id="kpiRow2"></div>
+
+  <!-- Trend chart -->
+  <div class="row r3">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:6px;">
+        <div>
+          <h3>Spend &amp; Leads Trend</h3>
+          <div class="sub" id="trendSub">Dual-axis: Cost (stacked by campaign segment) and AI Leads (line)</div>
+        </div>
+        <div class="trend-toggle pill-group" data-dim="trendBucket">
+          <div class="pill active" data-val="month">Monthly</div>
+          <div class="pill" data-val="week">Weekly</div>
+        </div>
+      </div>
+      <div class="chart-wrap" id="trendChartWrap">
+        <svg id="trendChart" width="100%" height="320" preserveAspectRatio="none"></svg>
+        <div class="trend-tooltip" id="trendTooltip"></div>
+      </div>
+      <div class="footnote">Hover over any bar/point for details. Trend respects all active filters.</div>
+    </div>
+  </div>
+
+  <!-- Waterfall + Donut -->
+  <div class="row r1">
+    <div class="card">
+      <h3>Acquisition Waterfall</h3>
+      <div class="sub">Spend → Reach → Clicks → Leads → Sales · drop-off shown per stage</div>
+      <div id="waterfall"></div>
+      <div class="footnote" id="wfNote"></div>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;gap:20px;">
+      <div>
+        <h3>Lead Qualification Mix</h3>
+        <div class="sub">AI qualification of leads in current filter</div>
+        <div id="donutWrap"></div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:16px;">
+        <h3>Lead Location Split</h3>
+        <div class="sub">Delhi-NCR vs Outside vs Unknown</div>
+        <div id="donutLocWrap"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. Tata vs Non-Tata (moved up) -->
+  <div class="row r2">
+    <div class="card" style="grid-column: 1 / -1;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;">
+        <h3 style="margin:0;">Tata vs Non-Tata · Leads &amp; Sales</h3>
+        <button class="csv-btn" data-target="vs">⬇ CSV</button>
+      </div>
+      <div class="sub">Leads classified via <em>Subscription Plan Interest</em>; Sales via plan name; Spend via campaign-name "tata"</div>
+      <div class="vs-grid" id="vsGrid"></div>
+    </div>
+  </div>
+
+  <!-- 2. First Touch Source Attribution + its sales table -->
+  <div class="row r3">
+    <div class="card">
+      <h3>First Touch Source Attribution</h3>
+      <div class="sub">Sales grouped by where the customer first appeared in our environment. Click a card or use the dropdown to drill in.</div>
+      <div class="path-filter-row">
+        <label class="filter-label" for="firstSrcSelect" style="margin:0;">FIRST TOUCH:</label>
+        <select id="firstSrcSelect" class="path-select">
+          <option value="__ALL__">All first-touch sources</option>
+        </select>
+        <button id="firstSrcClear" class="path-clear" style="display:none;">✕ Clear selection</button>
+      </div>
+      <div class="path-grid" id="firstSrcGrid"></div>
+      <div class="footnote" id="firstSrcNote"></div>
+    </div>
+  </div>
+
+  <div class="row r2">
+    <div class="card" style="grid-column: 1 / -1;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;">
+        <div>
+          <h3>Sales Detail — by First Touch Source</h3>
+          <div class="sub" id="salesSub2">All sales matching current filters · grouped by first-touch source above</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="csv-btn" data-target="firstsrc">⬇ CSV</button>
+          <div style="font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:1px;text-transform:uppercase;" id="salesCount2"></div>
+        </div>
+      </div>
+      <div class="sales-table-wrap">
+        <table class="sales-table" id="salesTable2">
+          <thead>
+            <tr>
+              <th>#</th><th>Name</th><th>Phone Number</th><th>Plan</th>
+              <th>Sale Date</th><th>First Touch</th><th>First Source</th>
+              <th>Path</th><th>Segment</th>
+            </tr>
+          </thead>
+          <tbody id="salesTbody2"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Sales Attribution Paths (no sales detail) -->
+  <div class="row r3">
+    <div class="card">
+      <h3>Sales Attribution Paths</h3>
+      <div class="sub">How each sale's customer travelled through our channels — full ordered chronological path. Click a card to filter, or use the dropdown.</div>
+      <div class="path-filter-row">
+        <label class="filter-label" for="pathSelect" style="margin:0;">FILTER PATH:</label>
+        <select id="pathSelect" class="path-select">
+          <option value="__ALL__">All paths · show every attribution bucket</option>
+        </select>
+        <button id="pathClear" class="path-clear" style="display:none;">✕ Clear selection</button>
+      </div>
+      <div class="path-grid" id="pathGrid"></div>
+      <div class="footnote" id="pathNote"></div>
+    </div>
+  </div>
+
+  <!-- Plan donuts -->
+  <div class="row r2">
+    <div class="card">
+      <h3>Sales by Subscription Plan</h3>
+      <div class="sub">Number of sales per plan</div>
+      <div id="planCountDonut"></div>
+    </div>
+    <div class="card">
+      <h3>Plan Value by Subscription Plan</h3>
+      <div class="sub">Sum of Plan Value (without GST) per plan</div>
+      <div id="planValueDonut"></div>
+    </div>
+  </div>
+
+  <!-- Customer Journey table -->
+  <div class="row r2">
+    <div class="card" style="grid-column: 1 / -1;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;">
+        <div>
+          <h3>Customer Journey — Full Touchpoint Trail</h3>
+          <div class="sub" id="journeySub">Every sale's ordered touch sequence — phone, name, all touchpoints with timestamps, sale closure, and plan</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="csv-btn" data-target="journey">⬇ CSV</button>
+          <div style="font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:1px;text-transform:uppercase;" id="journeyCount"></div>
+        </div>
+      </div>
+      <div class="sales-table-wrap">
+        <table class="sales-table" id="journeyTable">
+          <thead>
+            <tr id="journeyTheadRow"></tr>
+          </thead>
+          <tbody id="journeyTbody"></tbody>
+        </table>
+      </div>
+      <div class="footnote">Consecutive identical sources are collapsed (two AI touches in a row appear as one). Sales with no recorded pre-sale touch are shown as "Direct / Untracked" with no touchpoint legs.</div>
+    </div>
+  </div>
+
+  <!-- Disclaimers -->
+  <div class="disclaimers">
+    <h4>Methodology &amp; Disclaimers</h4>
+    <ol>
+      <li>
+        <strong>Data sources.</strong> AI / Joule lead stream, Sales Closure Repository, Digital
+        app downloads sheet, Ground Leads Repository + legacy Ground sheet (deduplicated by
+        phone, earliest touch), Other_all_data (Adhoc / Rescue / DNP Pool / IVR / Refer &amp;
+        Earn / Interakt campaign), and Meta Ads Manager export.
+      </li>
+      <li>
+        <strong>Phone-number quality.</strong> The AI Joule export stores phones in scientific
+        notation (e.g. 9.18595E+11), destroying precision for ~31% of rows. We bridge through
+        the older <em>AI_Lead_Flow.csv</em> via (Name, Lead Date) for the Jan 2025 – May 2026
+        overlap. Re-export Joule as text to make the join exact.
+      </li>
+      <li>
+        <strong>Tata vs Non-Tata — Leads.</strong> Classified <em>only</em> via the
+        <em>SUBSCRIPTION_PLAN_INTEREST</em> column. If it contains "success", "experience", or
+        "tata.ev" (case-insensitive substring), the lead is Tata. Everything else (including
+        blanks and "Could not be ascertained") is Non-Tata.
+      </li>
+      <li>
+        <strong>Tata vs Non-Tata — Sales.</strong> Classified purely by subscription plan name.
+        Plans containing "success" or "experience" → Tata. All others → Non-Tata.
+      </li>
+      <li>
+        <strong>Tata vs Non-Tata — Ad Spend.</strong> Tagged by Meta campaign name containing
+        "tata". This is intentionally different from the lead/sale rule above — ads come from
+        Meta which only has the campaign label, not the interest column.
+      </li>
+      <li>
+        <strong>Campaign Segments.</strong> Resolved in priority order from the Meta campaign
+        name: (1) contains <em>"tata"</em> → <strong>Tata</strong>; (2) is a Post / Instagram
+        post → <strong>SM Post</strong>; (3) "Campaign 4–8" → <strong>Focused</strong>; (4)
+        "Campaign 1–3" → <strong>Standard</strong>; otherwise <strong>Other</strong>. Tata
+        wins ties (e.g. "Campaign 5 Tata" is Tata, not Focused).
+      </li>
+      <li>
+        <strong>Sales scope.</strong> Excludes <em>Renewal</em>, <em>B2B Fleet</em>, and any
+        sale where the Subscription Sold starts with "B2B". Result: <strong>442 sales</strong>
+        since Jan 2025 (down from 469 — removed 27 B2B-named plans).
+      </li>
+      <li>
+        <strong>Attribution paths.</strong> For each sale we look up the customer's phone
+        across AI / App / Ground / Other tables and stitch together every touch dated
+        <em>strictly before</em> the sale-closure date, in chronological order. Consecutive
+        identical sources are collapsed. <em>First touch source</em> is just the first leg of
+        that path. The <em>First Touch Source</em> filter at the top affects every section.
+      </li>
+      <li>
+        <strong>Location of sales.</strong> All sales are treated as Delhi-NCR. The
+        "Outside Delhi-NCR" and "Unknown" location filters therefore show 0 sales.
+      </li>
+      <li>
+        <strong>KPI formulas.</strong>
+        <em>AI Qualify Rate</em> = Qualified ÷ Total leads ·
+        <em>P1 Leads</em> shown with % of total ·
+        <em>Repetitive Leads</em> = MCS − New Messaging Contacts, with % of MCS ·
+        <em>Delta</em> = AI Leads − Meta MCS (= AI conversations beyond Meta).
+      </li>
+      <li>
+        <strong>Ad metrics by filter.</strong> Spend / Reach / Clicks / MCS / New Messaging
+        Contacts respond to <em>Campaign Segment</em> and Date filters only — Meta does not
+        attribute them at the geography or AI-quality level. Leads &amp; sales respond to all
+        filters.
+      </li>
+    </ol>
+  </div>
+
+</div>
+
+<script>
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzuO1Y1-3pNRNfMqc9mkbU0BaNAHPD7zdN3fEEviETIbAv_FSdTc9-MkNavfHUhlNEttw/exec";
+
+let DATA = null;
+
+// ===== State (populated after DATA loads) =====
+let WINDOW_START, WINDOW_END, WINDOW_DAYS;
+let state = {
+  period: 'till_date',
+  location: 'Overall',
+  qual: 'All',
+  camp: 'All',
+  firstSrc: 'All',
+  trendBucket: 'month',
+  sliderStartDays: 0,
+  sliderEndDays: 0,
+  selectedPath: null,
+  selectedFirstSrc: null,
+};
+
+// ===== Helpers =====
+function fmtINR(n) {
+  if (n >= 10000000) return "₹" + (n/10000000).toFixed(2) + " Cr";
+  if (n >= 100000)   return "₹" + (n/100000).toFixed(2) + " L";
+  if (n >= 1000)     return "₹" + (n/1000).toFixed(1) + "K";
+  return "₹" + Math.round(n).toLocaleString("en-IN");
+}
+function fmtNum(n) {
+  if (n >= 10000000) return (n/10000000).toFixed(2) + " Cr";
+  if (n >= 100000)   return (n/100000).toFixed(2) + " L";
+  if (n >= 1000)     return (n/1000).toFixed(1) + "K";
+  return Math.round(n).toLocaleString("en-IN");
+}
+function pct(part, whole) {
+  if (!whole) return "0%";
+  return ((part/whole)*100).toFixed(1) + "%";
+}
+function dateAddDays(d, days) { const r = new Date(d.getTime()); r.setDate(r.getDate() + days); return r; }
+function fmtDateShort(d) { return d.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'2-digit'}); }
+function fmtDateISO(d) { const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; }
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+// ===== Build filter pills (called from init after DATA loads) =====
+function buildFilters() {
+  const periodLabels = {};
+  DATA.period_order.forEach(k => { periodLabels[k] = DATA.periods[k].label; });
+  const filterDefs = {
+    period:   { options: DATA.period_order, labels: periodLabels },
+    location: { options: DATA.locations,    labels: {} },
+    qual:     { options: DATA.quals,        labels: {} },
+    camp:     { options: DATA.camp_segs,    labels: {} },
+  };
+  Object.entries(filterDefs).forEach(([dim, def]) => {
+    const wrap = document.querySelector(`[data-dim="${dim}"]`);
+    wrap.innerHTML = '';
+    def.options.forEach(opt => {
+      const pill = document.createElement('div');
+      pill.className = 'pill' + (state[dim] === opt ? ' active' : '');
+      pill.textContent = def.labels[opt] || opt;
+      pill.dataset.val = opt;
+      pill.onclick = () => {
+        state[dim] = opt;
+        state.selectedPath = null;
+        state.selectedFirstSrc = null;
+        wrap.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', p.dataset.val === opt));
+        if (dim === 'period') syncSliderToPeriod();
+        render();
+      };
+      wrap.appendChild(pill);
+    });
+  });
+  // Trend bucket pills
+  document.querySelectorAll('[data-dim="trendBucket"] .pill').forEach(p => {
+    p.onclick = () => {
+      document.querySelectorAll('[data-dim="trendBucket"] .pill').forEach(x => x.classList.toggle('active', x === p));
+      state.trendBucket = p.dataset.val;
+      renderTrend();
+    };
+  });
+  // First Touch top-bar filter
+  const firstSrcFilter = document.getElementById('firstSrcFilter');
+  firstSrcFilter.innerHTML = DATA.first_srcs.map(s => `<option value="${s}">${s === 'All' ? 'All sources' : s + ' first'}</option>`).join('');
+  firstSrcFilter.value = 'All';
+  firstSrcFilter.addEventListener('change', () => {
+    state.firstSrc = firstSrcFilter.value;
+    state.selectedPath = null;
+    state.selectedFirstSrc = null;
+    render();
+  });
+};
+
+// ===== Date slider =====
+const sliderMin = document.getElementById('sliderMin');
+const sliderMax = document.getElementById('sliderMax');
+const sliderRange = document.getElementById('sliderRange');
+const sliderMinLbl = document.getElementById('sliderMinLbl');
+const sliderMaxLbl = document.getElementById('sliderMaxLbl');
+// slider bounds set in init() after DATA loads
+
+function updateSliderUI() {
+  const a = +sliderMin.value, b = +sliderMax.value;
+  const lo = Math.min(a,b), hi = Math.max(a,b);
+  const loPct = (lo / WINDOW_DAYS) * 100;
+  const hiPct = (hi / WINDOW_DAYS) * 100;
+  sliderRange.style.left = loPct + '%';
+  sliderRange.style.width = (hiPct - loPct) + '%';
+  const loDate = dateAddDays(WINDOW_START, lo);
+  const hiDate = dateAddDays(WINDOW_START, hi);
+  sliderMinLbl.textContent = fmtDateShort(loDate);
+  sliderMaxLbl.textContent = fmtDateShort(hiDate);
+  state.sliderStartDays = lo; state.sliderEndDays = hi;
+}
+sliderMin.oninput = () => { updateSliderUI(); render(); };
+sliderMax.oninput = () => { updateSliderUI(); render(); };
+
+function syncSliderToPeriod() {
+  const b = DATA.period_bounds[state.period];
+  const sd = new Date(b.start), ed = new Date(b.end);
+  const lo = Math.max(0, Math.round((sd - WINDOW_START) / 86400000));
+  const hi = Math.min(WINDOW_DAYS, Math.round((ed - WINDOW_START) / 86400000));
+  sliderMin.value = lo; sliderMax.value = hi;
+  updateSliderUI();
+}
+
+function isSliderCustom() {
+  const lo = +sliderMin.value, hi = +sliderMax.value;
+  const a = Math.min(lo,hi), b = Math.max(lo,hi);
+  return !(a === 0 && b === WINDOW_DAYS);
+}
+function getSliceBounds() {
+  if (isSliderCustom()) {
+    const lo = Math.min(+sliderMin.value, +sliderMax.value);
+    const hi = Math.max(+sliderMin.value, +sliderMax.value);
+    return { start: dateAddDays(WINDOW_START, lo), end: dateAddDays(WINDOW_START, hi), custom: true };
+  }
+  const b = DATA.period_bounds[state.period];
+  return { start: new Date(b.start), end: new Date(b.end), custom: false };
+}
+
+// ===== Compute aggregated slice =====
+function computeSlice() {
+  const { start, end } = getSliceBounds();
+  const startStr = fmtDateISO(start), endStr = fmtDateISO(end);
+
+  // Ad metrics — filtered by Campaign Segment
+  let spend=0, reach=0, clicks=0, mcs=0, new_msg=0;
+  let tata_spend=0, nontata_spend=0;
+  for (const r of DATA.ads_daily) {
+    if (r.date < startStr || r.date > endStr) continue;
+    if (state.camp !== 'All' && r.seg !== state.camp) continue;
+    spend += r.spend; reach += r.reach; clicks += r.clicks; mcs += r.mcs; new_msg += r.new_msg;
+    // For Tata spend tracking: "Tata" campaign segment maps to tata spend; everything else is non-tata
+    if (r.seg === 'Tata') tata_spend += r.spend;
+    else nontata_spend += r.spend;
+  }
+
+  // Leads — filtered by Location, AI Quality, plus Tata via Subscription Plan Interest
+  // Note: Campaign segment does NOT filter leads (different data source)
+  // Tata/Non-Tata buckets for leads come from r.tata (which is now based on subscription interest)
+  let leads=0, qualified=0, unqualified=0, offtopic=0;
+  let tata_leads=0, nontata_leads=0;
+  let loc_ncr=0, loc_outside=0, loc_unk=0;
+  let p1_leads=0;
+  for (const r of DATA.leads_daily) {
+    if (r.date < startStr || r.date > endStr) continue;
+    if (state.location !== 'Overall' && r.loc !== state.location) continue;
+    if (state.qual !== 'All' && r.qual !== state.qual) continue;
+    leads += r.n;
+    if (r.qual === 'Qualified') qualified += r.n;
+    if (r.qual === 'Unqualified') unqualified += r.n;
+    if (r.qual === 'Offtopic') offtopic += r.n;
+    if (r.tata === 'Tata') tata_leads += r.n;
+    else nontata_leads += r.n;
+    if (r.loc === 'Delhi-NCR') loc_ncr += r.n;
+    else if (r.loc === 'Outside Delhi-NCR') loc_outside += r.n;
+    else loc_unk += r.n;
+    if (r.p1) p1_leads += r.n;
+  }
+
+  // Renewals — date only
+  let renewals = 0;
+  for (const r of DATA.renewals_daily) {
+    if (r.date < startStr || r.date > endStr) continue;
+    renewals++;
+  }
+
+  // Sales — applies date + first-source filter (campaign segment & location don't apply to sales)
+  // Tata for sales is from plan name (already in s.tata)
+  const saleIdsAll = [];
+  const pathCounts = {};
+  const firstSrcCounts = {};
+  const planCount = {};
+  const planValue = {};
+  let sales=0, tata_sales=0, nontata_sales=0;
+  let tata_sales_value=0, nontata_sales_value=0;
+  const saleLocOk = (state.location === 'Overall' || state.location === 'Delhi-NCR');
+  if (saleLocOk) {
+    for (const s of DATA.sales) {
+      if (s.date_iso < startStr || s.date_iso > endStr) continue;
+      if (state.qual !== 'All' && state.qual !== 'Qualified') continue;
+      if (state.firstSrc !== 'All' && s.first_src !== state.firstSrc) continue;
+      sales++;
+      pathCounts[s.path] = (pathCounts[s.path] || 0) + 1;
+      firstSrcCounts[s.first_src] = (firstSrcCounts[s.first_src] || 0) + 1;
+      const plan = s.plan || '(no plan)';
+      planCount[plan] = (planCount[plan] || 0) + 1;
+      planValue[plan] = (planValue[plan] || 0) + (s.plan_value || 0);
+      saleIdsAll.push(s.id);
+      if (s.tata === 'Tata') { tata_sales++; tata_sales_value += (s.plan_value || 0); }
+      else { nontata_sales++; nontata_sales_value += (s.plan_value || 0); }
+    }
+  }
+
+  return {
+    spend, reach, clicks, mcs, new_msg, leads,
+    qualified, unqualified, offtopic,
+    p1_leads, renewals,
+    tata_leads, nontata_leads,
+    loc_ncr, loc_outside, loc_unk,
+    tata_spend, nontata_spend,
+    sales, tata_sales, nontata_sales,
+    tata_sales_value, nontata_sales_value,
+    sale_ids: saleIdsAll, paths: pathCounts, first_src: firstSrcCounts,
+    plan_count: planCount, plan_value: planValue,
+    start, end,
+  };
+}
+
+// ===== Render KPIs =====
+function renderKPIs(d) {
+  const { start, end } = getSliceBounds();
+  const label = isSliderCustom() ? 'Custom Range' : DATA.periods[state.period].label;
+  const sub = `${fmtDateShort(start)} → ${fmtDateShort(end)}`;
+  const qualRate = d.leads ? ((d.qualified / d.leads) * 100) : 0;
+  const totalLeads = d.tata_leads + d.nontata_leads;
+  document.getElementById('kpiRow').innerHTML = `
+    <div class="kpi spend">
+      <div class="kpi-label">Spend</div>
+      <div class="kpi-value">${fmtINR(d.spend)}</div>
+      <div class="kpi-sub">${label} · ${sub}</div>
+    </div>
+    <div class="kpi leads">
+      <div class="kpi-label">Leads</div>
+      <div class="kpi-value">${fmtNum(d.leads)}</div>
+      <div class="kpi-split">
+        <span><span class="dot" style="background:var(--tata)"></span>Tata ${fmtNum(d.tata_leads)} (${pct(d.tata_leads, totalLeads)})</span>
+        <span><span class="dot" style="background:var(--nontata)"></span>Non-Tata ${fmtNum(d.nontata_leads)} (${pct(d.nontata_leads, totalLeads)})</span>
+      </div>
+    </div>
+    <div class="kpi qualrate">
+      <div class="kpi-label">AI Qualify Rate</div>
+      <div class="kpi-value">${qualRate.toFixed(1)}%</div>
+      <div class="kpi-sub">${fmtNum(d.qualified)} qualified / ${fmtNum(d.leads)} total</div>
+    </div>
+    <div class="kpi p1leads">
+      <div class="kpi-label">P1 Leads</div>
+      <div class="kpi-value">${fmtNum(d.p1_leads)}</div>
+      <div class="kpi-sub">${pct(d.p1_leads, d.leads)} of total leads</div>
+    </div>
+    <div class="kpi renewals">
+      <div class="kpi-label">Renewals</div>
+      <div class="kpi-value">${fmtNum(d.renewals)}</div>
+      <div class="kpi-sub">Renewal purchases</div>
+    </div>
+    <div class="kpi sales">
+      <div class="kpi-label">Sales</div>
+      <div class="kpi-value">${fmtNum(d.sales)}</div>
+      <div class="kpi-split">
+        <span><span class="dot" style="background:var(--tata)"></span>Tata ${d.tata_sales} (${pct(d.tata_sales, d.sales)})</span>
+        <span><span class="dot" style="background:var(--nontata)"></span>Non-Tata ${d.nontata_sales} (${pct(d.nontata_sales, d.sales)})</span>
+      </div>
+    </div>`;
+
+  const delta = Math.max(0, d.leads - d.mcs);
+  const repetitive = Math.max(0, d.mcs - d.new_msg);
+  document.getElementById('kpiRow2').innerHTML = `
+    <div class="kpi metaleads">
+      <div class="kpi-label">Meta Leads (MCS)</div>
+      <div class="kpi-value">${fmtNum(d.mcs)}</div>
+      <div class="kpi-sub">Messaging conversations started</div>
+    </div>
+    <div class="kpi delta">
+      <div class="kpi-label">Delta</div>
+      <div class="kpi-value">${fmtNum(delta)}</div>
+      <div class="kpi-sub">AI Leads − Meta MCS</div>
+    </div>
+    <div class="kpi repetitive">
+      <div class="kpi-label">Repetitive Leads</div>
+      <div class="kpi-value">${fmtNum(repetitive)}</div>
+      <div class="kpi-sub">MCS − New Contacts · ${pct(repetitive, d.mcs)} of Meta Leads</div>
+    </div>`;
+}
+
+// ===== Waterfall =====
+function renderWaterfall(d) {
+  const stages = [
+    { key: 'spend',  name: 'Spend',  val: d.spend,  fmt: fmtINR, color: 'spend',  split: null },
+    { key: 'reach',  name: 'Reach',  val: d.reach,  fmt: fmtNum, color: 'reach',  split: null },
+    { key: 'clicks', name: 'Clicks', val: d.clicks, fmt: fmtNum, color: 'clicks', split: null },
+    { key: 'leads',  name: 'Leads',  val: d.leads,  fmt: fmtNum, color: null,
+      split: { tata: d.tata_leads, nontata: d.nontata_leads, unk: 0 } },
+    { key: 'sales',  name: 'Sales',  val: d.sales,  fmt: fmtNum, color: null,
+      split: { tata: d.tata_sales, nontata: d.nontata_sales, unk: 0 } },
+  ];
+  const maxVal = Math.max(...stages.map(s => s.val), 1);
+  const minVal = Math.max(1, Math.min(...stages.filter(s=>s.val>0).map(s => s.val)));
+  function logW(v) {
+    if (v <= 0) return 2;
+    if (maxVal === minVal) return 100;
+    const lo = Math.log10(minVal), hi = Math.log10(maxVal);
+    return 8 + ((Math.log10(v) - lo) / (hi - lo)) * 92;
+  }
+  let html = '';
+  stages.forEach((s, i) => {
+    const w = logW(s.val);
+    let convChip = '';
+    if (i > 0) {
+      const prev = stages[i-1];
+      if (prev.val > 0) {
+        if (s.key === 'reach' && prev.key === 'spend') {
+          const cpm = (prev.val / s.val) * 1000;
+          convChip = `<span class="wf-conv">CPM ₹${cpm.toFixed(2)}</span>`;
+        } else {
+          const r = (s.val / prev.val) * 100;
+          convChip = `<span class="wf-conv">${r >= 1 ? r.toFixed(1) : r.toFixed(3)}% of ${prev.name}</span>`;
+        }
+      }
+    }
+    let barHTML = '';
+    if (s.split) {
+      const tot = Math.max(1, s.split.tata + s.split.nontata + s.split.unk);
+      const tW = (s.split.tata / tot) * w;
+      const nW = (s.split.nontata / tot) * w;
+      const showLabel = (segW) => segW > 6;
+      barHTML = `
+        ${s.split.tata    > 0 ? `<div class="wf-bar tata"    style="width:${tW}%">${showLabel(tW) ? `Tata · ${fmtNum(s.split.tata)}` : ''}</div>` : ''}
+        ${s.split.nontata > 0 ? `<div class="wf-bar nontata" style="width:${nW}%">${showLabel(nW) ? `Non-Tata · ${fmtNum(s.split.nontata)}` : ''}</div>` : ''}
+      `;
+    } else {
+      barHTML = `<div class="wf-bar ${s.color}" style="width:${w}%">${s.fmt(s.val)}</div>`;
+    }
+    html += `<div class="wf-stage">
+      <div class="wf-head"><div class="wf-name">${s.name}${convChip}</div><div class="wf-val">${s.fmt(s.val)}</div></div>
+      <div class="wf-bar-wrap">${barHTML}</div>
+    </div>${i < stages.length - 1 ? '<div class="wf-arrow"></div>' : ''}`;
+  });
+  document.getElementById('waterfall').innerHTML = html;
+  const notes = [];
+  if (state.location !== 'Overall') notes.push("Spend/Reach/Clicks not split by location — channel totals shown.");
+  if (state.qual !== 'All') notes.push("Spend/Reach/Clicks not split by AI quality — channel totals shown.");
+  const note = document.getElementById('wfNote');
+  note.textContent = notes.join(" ");
+  note.style.display = notes.length ? "block" : "none";
+}
+
+// ===== Donut: qualification =====
+function renderDonut(d) {
+  const q = d.qualified, u = d.unqualified, o = d.offtopic;
+  const total = q + u + o;
+  const root = document.getElementById('donutWrap');
+  if (total === 0) { root.innerHTML = `<div class="empty-state">No leads matched.</div>`; return; }
+  const size = 200, r = 80, cx = size/2, cy = size/2, stroke = 30;
+  const segs = [
+    { val: q, color: 'var(--qualified)',   label: 'Qualified' },
+    { val: u, color: 'var(--unqualified)', label: 'Unqualified' },
+    { val: o, color: 'var(--offtopic)',    label: 'Offtopic' },
+  ];
+  let offset = 0;
+  const circ = 2 * Math.PI * r;
+  const dashSegs = segs.map(s => {
+    const len = (s.val/total) * circ;
+    const out = { dash: `${len} ${circ - len}`, offset: -offset, color: s.color };
+    offset += len;
+    return out;
+  });
+  const circles = dashSegs.map(ds => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${ds.color}" stroke-width="${stroke}" stroke-dasharray="${ds.dash}" stroke-dashoffset="${ds.offset}" transform="rotate(-90 ${cx} ${cy})" />`).join('');
+  const legend = segs.map(s => `<div class="donut-legend-row"><div class="label"><span class="dot" style="background:${s.color}"></span>${s.label}</div><div><span class="val">${fmtNum(s.val)}</span><span class="pct">${pct(s.val, total)}</span></div></div>`).join('');
+  root.innerHTML = `<div class="donut-wrap"><div class="donut-svg-wrap" style="width:${size}px;height:${size}px;"><svg width="${size}" height="${size}">${circles}</svg><div class="donut-center"><div class="v">${fmtNum(total)}</div><div class="l">Leads</div></div></div><div class="donut-legend">${legend}</div></div>`;
+}
+
+function renderDonutLocation(d) {
+  const ncr = d.loc_ncr, out = d.loc_outside, unk = d.loc_unk;
+  const total = ncr + out + unk;
+  const root = document.getElementById('donutLocWrap');
+  if (total === 0) { root.innerHTML = `<div class="empty-state">No leads matched.</div>`; return; }
+  const size = 160, r = 60, cx = size/2, cy = size/2, stroke = 24;
+  const segs = [
+    { val: ncr, color: 'var(--teal)',   label: 'Delhi-NCR' },
+    { val: out, color: 'var(--indigo)', label: 'Outside Delhi-NCR' },
+    { val: unk, color: 'var(--unk)',    label: 'Unknown' },
+  ];
+  let offset = 0;
+  const circ = 2 * Math.PI * r;
+  const ds = segs.map(s => {
+    const len = (s.val/total) * circ;
+    const o = { dash: `${len} ${circ - len}`, offset: -offset, color: s.color };
+    offset += len; return o;
+  });
+  const circles = ds.map(d => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${d.color}" stroke-width="${stroke}" stroke-dasharray="${d.dash}" stroke-dashoffset="${d.offset}" transform="rotate(-90 ${cx} ${cy})" />`).join('');
+  const legend = segs.map(s => `<div class="donut-legend-row"><div class="label"><span class="dot" style="background:${s.color}"></span>${s.label}</div><div><span class="val">${fmtNum(s.val)}</span><span class="pct">${pct(s.val, total)}</span></div></div>`).join('');
+  root.innerHTML = `<div class="donut-wrap"><div class="donut-svg-wrap" style="width:${size}px;height:${size}px;flex-shrink:0;"><svg width="${size}" height="${size}">${circles}</svg><div class="donut-center"><div class="v" style="font-size:18px;">${fmtNum(total)}</div><div class="l">Leads</div></div></div><div class="donut-legend">${legend}</div></div>`;
+}
+
+// ===== Tata vs Non-Tata grid =====
+function renderVS(d) {
+  const root = document.getElementById('vsGrid');
+  const cols = [
+    { key: 'tata',    label: 'Tata',     leads: d.tata_leads,    sales: d.tata_sales,    spend: state.camp === 'Tata' ? d.spend : (state.camp === 'All' ? d.tata_spend : 0),    value: d.tata_sales_value },
+    { key: 'nontata', label: 'Non-Tata', leads: d.nontata_leads, sales: d.nontata_sales, spend: state.camp === 'Tata' ? 0 : (state.camp === 'All' ? d.nontata_spend : d.spend), value: d.nontata_sales_value },
+  ];
+  const totLeads = cols.reduce((a,c) => a + c.leads, 0) || 1;
+  const totSales = cols.reduce((a,c) => a + c.sales, 0) || 1;
+  const totSpend = cols.reduce((a,c) => a + c.spend, 0) || 1;
+  const totValue = cols.reduce((a,c) => a + c.value, 0) || 1;
+  root.innerHTML = cols.map(c => `
+    <div class="vs-col ${c.key}">
+      <h4>${c.label}</h4>
+      <div class="stat-row"><span class="sl">Spend</span><span class="sv">${fmtINR(c.spend)} <span style="font-size:11px;color:var(--text-muted);font-weight:600">(${pct(c.spend, totSpend)})</span></span></div>
+      <div class="stat-row"><span class="sl">Leads</span><span class="sv">${fmtNum(c.leads)} <span style="font-size:11px;color:var(--text-muted);font-weight:600">(${pct(c.leads, totLeads)})</span></span></div>
+      <div class="stat-row"><span class="sl">Sales</span><span class="sv">${c.sales} <span style="font-size:11px;color:var(--text-muted);font-weight:600">(${pct(c.sales, totSales)})</span></span></div>
+      <div class="stat-row"><span class="sl">Sales Value</span><span class="sv">${fmtINR(c.value)} <span style="font-size:11px;color:var(--text-muted);font-weight:600">(${pct(c.value, totValue)})</span></span></div>
+      <div class="stat-row"><span class="sl">ROAS</span><span class="sv" style="color:${c.spend && c.value/c.spend >= 3 ? 'var(--qualified)' : 'var(--text)'};">${c.spend ? (c.value/c.spend).toFixed(2)+"×" : "—"}</span></div>
+      <div class="stat-row"><span class="sl">Lead→Sale</span><span class="sv">${c.leads ? ((c.sales/c.leads)*100).toFixed(2)+"%" : "—"}</span></div>
+      <div class="stat-row"><span class="sl">Cost / Lead</span><span class="sv">${c.leads && c.spend ? fmtINR(c.spend/c.leads) : "—"}</span></div>
+    </div>
+  `).join('');
+}
+
+// ===== First Touch Source attribution =====
+function renderFirstSrc(d) {
+  const root = document.getElementById('firstSrcGrid');
+  const totSales = d.sales || 1;
+  const sources = Object.keys(d.first_src || {}).sort((a,b) => d.first_src[b] - d.first_src[a]);
+  if (sources.length === 0) {
+    root.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">No sales match the current filters.</div>`;
+    document.getElementById('firstSrcNote').textContent = '';
+    populateFirstSrcDropdown([]);
+    return;
+  }
+  const idSet = new Set(d.sale_ids || []);
+  const tataBySrc = {};
+  for (const s of DATA.sales) {
+    if (!idSet.has(s.id)) continue;
+    if (!tataBySrc[s.first_src]) tataBySrc[s.first_src] = { tata: 0, nontata: 0 };
+    if (s.tata === 'Tata') tataBySrc[s.first_src].tata++; else tataBySrc[s.first_src].nontata++;
+  }
+  const classes = ['p1','p2','p3','p4','p5','p6'];
+  const visible = state.selectedFirstSrc ? [state.selectedFirstSrc].filter(s => sources.includes(s)) : sources;
+  root.innerHTML = visible.map((src, i) => {
+    const n = d.first_src[src] || 0;
+    const split = tataBySrc[src] || { tata: 0, nontata: 0 };
+    const isSel = state.selectedFirstSrc === src;
+    const cls = classes[sources.indexOf(src) % classes.length];
+    return `<div class="path-card ${cls} ${isSel ? 'selected' : ''}" data-src="${escapeHtml(src)}">
+      <div class="path-flow">${escapeHtml(src)} → Sale</div>
+      <div class="path-count">${n} <span class="path-pct">· ${pct(n, totSales)} of sales</span></div>
+      <div class="path-tata">
+        <span><span class="dot" style="background:var(--tata)"></span>Tata ${split.tata}</span>
+        <span><span class="dot" style="background:var(--nontata)"></span>Non-Tata ${split.nontata}</span>
+      </div>
+    </div>`;
+  }).join('');
+  root.querySelectorAll('.path-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const v = card.dataset.src;
+      state.selectedFirstSrc = (state.selectedFirstSrc === v) ? null : v;
+      syncFirstSrcDropdown();
+      render();
+    });
+  });
+  populateFirstSrcDropdown(sources, d.first_src);
+  if (state.selectedFirstSrc) {
+    document.getElementById('firstSrcNote').innerHTML = `<strong>Filtering by first touch:</strong> ${escapeHtml(state.selectedFirstSrc)} · ${d.first_src[state.selectedFirstSrc] || 0} sales · table below shows only these customers.`;
+  } else {
+    document.getElementById('firstSrcNote').textContent = `${d.sales} sales grouped across ${sources.length} first-touch source${sources.length===1?'':'s'}. Click any card to drill in.`;
+  }
+}
+
+function populateFirstSrcDropdown(sources, counts) {
+  const sel = document.getElementById('firstSrcSelect');
+  sel.innerHTML = `<option value="__ALL__">All first-touch sources</option>` +
+    sources.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)} → Sale${counts?` (${counts[s]})`:''}</option>`).join('');
+  sel.value = state.selectedFirstSrc || '__ALL__';
+  document.getElementById('firstSrcClear').style.display = state.selectedFirstSrc ? 'inline-block' : 'none';
+}
+function syncFirstSrcDropdown() {
+  const sel = document.getElementById('firstSrcSelect');
+  sel.value = state.selectedFirstSrc || '__ALL__';
+  document.getElementById('firstSrcClear').style.display = state.selectedFirstSrc ? 'inline-block' : 'none';
+}
+
+// ===== Sales detail table (first-touch grouped) =====
+function renderSales2(d) {
+  const tbody = document.getElementById('salesTbody2');
+  const countEl = document.getElementById('salesCount2');
+  const sub = document.getElementById('salesSub2');
+  const idSet = new Set(d.sale_ids || []);
+  let rows = (DATA.sales || []).filter(s => idSet.has(s.id));
+  if (state.selectedFirstSrc) rows = rows.filter(r => r.first_src === state.selectedFirstSrc);
+  rows.sort((a,b) => (a.date_iso < b.date_iso ? 1 : -1));
+  countEl.textContent = `${rows.length} sale${rows.length===1?'':'s'}`;
+  sub.innerHTML = state.selectedFirstSrc
+    ? `Filtered to first touch: <strong style="color:var(--teal-dark)">${escapeHtml(state.selectedFirstSrc)}</strong>`
+    : `All sales matching current filters · grouped by first-touch source above`;
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text-muted);font-style:italic;padding:24px;">No sales match the current filters.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map((r, i) => `<tr>
+    <td class="idx">${i+1}</td>
+    <td class="nm">${escapeHtml(r.name || '—')}</td>
+    <td class="ph">${escapeHtml(r.phone || '—')}</td>
+    <td class="pl">${escapeHtml(r.plan || '—')}</td>
+    <td class="dt">${escapeHtml(r.date || '—')}</td>
+    <td class="dt">${escapeHtml(r.first_touch || '—')}</td>
+    <td class="pa" style="font-weight:700;color:var(--teal-dark);">${escapeHtml(r.first_src || '—')}</td>
+    <td class="pa">${escapeHtml(r.path || '—')}</td>
+    <td><span class="seg-badge ${r.tata === 'Tata' ? 'tata' : 'nontata'}">${r.tata}</span></td>
+  </tr>`).join('');
+}
+
+// ===== Path attribution =====
+function renderPaths(d) {
+  const root = document.getElementById('pathGrid');
+  const totSales = d.sales || 1;
+  if (Object.keys(d.paths || {}).length === 0) {
+    root.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">No sales match the current filters.</div>`;
+    document.getElementById('pathNote').textContent = '';
+    populatePathDropdown([]);
+    return;
+  }
+  const allPaths = Object.keys(d.paths).sort((a,b) => d.paths[b] - d.paths[a]);
+  const classes = ['p1','p2','p3','p4','p5','p6'];
+  const idSet = new Set(d.sale_ids || []);
+  const tataByPath = {};
+  for (const s of DATA.sales) {
+    if (!idSet.has(s.id)) continue;
+    if (!tataByPath[s.path]) tataByPath[s.path] = { tata: 0, nontata: 0 };
+    if (s.tata === 'Tata') tataByPath[s.path].tata++; else tataByPath[s.path].nontata++;
+  }
+  const visiblePaths = state.selectedPath ? [state.selectedPath].filter(p => allPaths.includes(p)) : allPaths;
+  root.innerHTML = visiblePaths.map((name, i) => {
+    const n = d.paths[name] || 0;
+    const split = tataByPath[name] || { tata: 0, nontata: 0 };
+    const isSel = state.selectedPath === name;
+    const cls = classes[allPaths.indexOf(name) % classes.length];
+    return `<div class="path-card ${cls} ${isSel ? 'selected' : ''}" data-path="${escapeHtml(name)}">
+      <div class="path-flow">${escapeHtml(name)}</div>
+      <div class="path-count">${n} <span class="path-pct">· ${pct(n, totSales)} of sales</span></div>
+      <div class="path-tata">
+        <span><span class="dot" style="background:var(--tata)"></span>Tata ${split.tata}</span>
+        <span><span class="dot" style="background:var(--nontata)"></span>Non-Tata ${split.nontata}</span>
+      </div>
+    </div>`;
+  }).join('');
+  root.querySelectorAll('.path-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const p = card.dataset.path;
+      state.selectedPath = (state.selectedPath === p) ? null : p;
+      syncPathDropdown();
+      render();
+    });
+  });
+  populatePathDropdown(allPaths, d.paths);
+  if (state.selectedPath) {
+    document.getElementById('pathNote').innerHTML = `<strong>Filtering by:</strong> ${escapeHtml(state.selectedPath)} · ${d.paths[state.selectedPath] || 0} sales.`;
+  } else {
+    document.getElementById('pathNote').textContent = `${d.sales} sales attributed across ${allPaths.length} distinct path${allPaths.length===1?'':'s'}.`;
+  }
+}
+
+function populatePathDropdown(paths, counts) {
+  const sel = document.getElementById('pathSelect');
+  sel.innerHTML = `<option value="__ALL__">All paths · show every attribution bucket</option>` +
+    paths.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}${counts?` (${counts[p]})`:''}</option>`).join('');
+  sel.value = state.selectedPath || '__ALL__';
+  document.getElementById('pathClear').style.display = state.selectedPath ? 'inline-block' : 'none';
+}
+function syncPathDropdown() {
+  const sel = document.getElementById('pathSelect');
+  sel.value = state.selectedPath || '__ALL__';
+  document.getElementById('pathClear').style.display = state.selectedPath ? 'inline-block' : 'none';
+}
+
+// ===== Plan donuts =====
+const PLAN_COLORS = ['#0d9488','#6366f1','#f59e0b','#ef4444','#14b8a6','#8b5cf6','#10b981','#f43f5e','#0ea5e9','#a855f7','#84cc16','#eab308','#ec4899','#06b6d4','#22c55e','#d946ef','#3b82f6','#fb923c','#f97316','#4ade80','#7c3aed','#dc2626','#0891b2','#15803d','#be185d','#92400e','#1e40af','#65a30d','#9333ea','#b91c1c'];
+function planColor(i) { return PLAN_COLORS[i % PLAN_COLORS.length]; }
+
+function renderPlanDonut(dataMap, rootId, valFmt, centerFmt) {
+  const root = document.getElementById(rootId);
+  const entries = Object.entries(dataMap || {}).sort((a,b) => b[1] - a[1]);
+  const total = entries.reduce((a,[,v]) => a + v, 0);
+  if (entries.length === 0 || total === 0) {
+    root.innerHTML = `<div class="empty-state">No sales data in current filter.</div>`;
+    return;
+  }
+  const size = 220, r = 80, cx = size/2, cy = size/2, stroke = 28;
+  let offset = 0;
+  const circ = 2 * Math.PI * r;
+  const segments = entries.map(([plan, val], i) => {
+    const len = (val/total) * circ;
+    const seg = { plan, val, len, offset: -offset, color: planColor(i) };
+    offset += len;
+    return seg;
+  });
+  const circles = segments.map(s => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.color}" stroke-width="${stroke}" stroke-dasharray="${s.len} ${circ - s.len}" stroke-dashoffset="${s.offset}" transform="rotate(-90 ${cx} ${cy})"><title>${s.plan}: ${valFmt(s.val)}</title></circle>`).join('');
+  const legend = segments.map(s => `<div class="plan-donut-legend-row"><div class="lbl"><span class="dot" style="background:${s.color}"></span><span class="nm" title="${escapeHtml(s.plan)}">${escapeHtml(s.plan)}</span></div><div><span class="v">${valFmt(s.val)}</span><span class="p">${pct(s.val, total)}</span></div></div>`).join('');
+  root.innerHTML = `<div class="plan-donut-wrap"><div class="plan-donut-svg" style="width:${size}px;height:${size}px;position:relative;"><svg width="${size}" height="${size}">${circles}</svg><div class="donut-center"><div class="v" style="font-size:18px;">${centerFmt(total)}</div><div class="l">Total</div></div></div><div class="plan-donut-legend">${legend}</div></div>`;
+}
+function renderPlanDonuts(d) {
+  renderPlanDonut(d.plan_count, 'planCountDonut', v => fmtNum(v), v => v + ' sale' + (v===1?'':'s'));
+  renderPlanDonut(d.plan_value, 'planValueDonut', v => fmtINR(v), v => fmtINR(v));
+}
+
+// ===== Trend chart (stacked bars, hover tooltips) =====
+function renderTrend() {
+  const { start, end } = getSliceBounds();
+  const startStr = fmtDateISO(start), endStr = fmtDateISO(end);
+  const bucket = state.trendBucket;
+
+  function bucketKey(dateStr) {
+    const d = new Date(dateStr);
+    if (bucket === 'month') return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const dd = new Date(d.getTime());
+    const day = dd.getDay() || 7;
+    if (day !== 1) dd.setDate(dd.getDate() - (day - 1));
+    return `${dd.getFullYear()}-${String(dd.getMonth()+1).padStart(2,'0')}-${String(dd.getDate()).padStart(2,'0')}`;
+  }
+  function bucketLabel(key) {
+    if (bucket === 'month') {
+      const [y,m] = key.split('-');
+      return new Date(+y, +m-1, 1).toLocaleDateString('en-IN', {month:'short', year:'2-digit'});
+    } else {
+      return new Date(key).toLocaleDateString('en-IN', {day:'numeric', month:'short'});
+    }
+  }
+
+  const SEGS = ['Tata', 'SM Post', 'Focused', 'Standard', 'Other'];
+  const SEG_COLORS = {
+    'Tata':     'var(--tata)',     // indigo
+    'SM Post':  'var(--rose)',
+    'Focused':  'var(--amber)',
+    'Standard': 'var(--nontata)',  // teal
+    'Other':    'var(--unk)',
+  };
+
+  const buckets = {};
+  for (const r of DATA.ads_daily) {
+    if (r.date < startStr || r.date > endStr) continue;
+    if (state.camp !== 'All' && r.seg !== state.camp) continue;
+    const k = bucketKey(r.date);
+    if (!buckets[k]) {
+      buckets[k] = { spend_by_seg: {Tata:0,'SM Post':0,Focused:0,Standard:0,Other:0}, leads: 0 };
+    }
+    buckets[k].spend_by_seg[r.seg] = (buckets[k].spend_by_seg[r.seg] || 0) + r.spend;
+  }
+  for (const r of DATA.leads_daily) {
+    if (r.date < startStr || r.date > endStr) continue;
+    if (state.location !== 'Overall' && r.loc !== state.location) continue;
+    if (state.qual !== 'All' && r.qual !== state.qual) continue;
+    const k = bucketKey(r.date);
+    if (!buckets[k]) buckets[k] = { spend_by_seg: {Tata:0,'SM Post':0,Focused:0,Standard:0,Other:0}, leads: 0 };
+    buckets[k].leads += r.n;
+  }
+  const keys = Object.keys(buckets).sort();
+  const series = keys.map(k => {
+    const b = buckets[k];
+    const total = SEGS.reduce((a,s) => a + (b.spend_by_seg[s] || 0), 0);
+    return {
+      key: k, label: bucketLabel(k),
+      spend_by_seg: b.spend_by_seg,
+      spend: total, leads: b.leads,
+    };
+  });
+
+  const svg = document.getElementById('trendChart');
+  const W = svg.clientWidth || 1000;
+  const H = 320;
+  const padL = 60, padR = 60, padT = 24, padB = 50;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  if (series.length === 0) {
+    svg.innerHTML = `<text x="${W/2}" y="${H/2}" text-anchor="middle" font-size="13" fill="#94a3b8" font-style="italic">No data in selected range</text>`;
+    return;
+  }
+
+  const maxSpend = Math.max(...series.map(s => s.spend), 1);
+  const maxLeads = Math.max(...series.map(s => s.leads), 1);
+  const n = series.length;
+  const groupW = innerW / n;
+  const barW = Math.max(8, Math.min(60, groupW * 0.6));
+
+  function xCenter(i) { return padL + (i + 0.5) * groupW; }
+  function ySpend(v) { return padT + innerH - (v / maxSpend) * innerH; }
+  function yLeads(v) { return padT + innerH - (v / maxLeads) * innerH; }
+
+  function makeTicks(max) { const t=[]; for (let i=0;i<=4;i++) t.push((max/4)*i); return t; }
+  const spendTicks = makeTicks(maxSpend);
+  const leadTicks  = makeTicks(maxLeads);
+
+  let html = '';
+  spendTicks.forEach(t => {
+    const y = ySpend(t);
+    html += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#e2e8f0" stroke-width="1" />`;
+    html += `<text x="${padL-6}" y="${y+4}" text-anchor="end" font-size="10" fill="#94a3b8" font-weight="600">${fmtINR(t)}</text>`;
+  });
+  leadTicks.forEach(t => {
+    const y = yLeads(t);
+    html += `<text x="${W-padR+6}" y="${y+4}" text-anchor="start" font-size="10" fill="#94a3b8" font-weight="600">${fmtNum(t)}</text>`;
+  });
+
+  // Stacked spend bars — 5 segments, drawn bottom-up in this order
+  const STACK_ORDER = ['Standard', 'Focused', 'SM Post', 'Other', 'Tata'];
+  series.forEach((s, i) => {
+    const x = xCenter(i) - barW/2;
+    let yCursor = padT + innerH;
+    for (const seg of STACK_ORDER) {
+      const v = s.spend_by_seg[seg] || 0;
+      if (v <= 0) continue;
+      const h = (v / maxSpend) * innerH;
+      yCursor -= h;
+      html += `<rect x="${x}" y="${yCursor}" width="${barW}" height="${h}" fill="${SEG_COLORS[seg]}" rx="0" ry="0"/>`;
+    }
+    // Invisible hover overlay
+    html += `<rect x="${xCenter(i) - groupW/2}" y="${padT}" width="${groupW}" height="${innerH}" fill="transparent" data-idx="${i}" class="trend-hover" style="cursor:crosshair;"/>`;
+  });
+
+  // Inline legend — all 5 segments + leads
+  let legendX = padL + 8;
+  const legendY = padT + 8;
+  const legendItems = [
+    {label: 'Tata', color: SEG_COLORS['Tata']},
+    {label: 'SM Post', color: SEG_COLORS['SM Post']},
+    {label: 'Focused', color: SEG_COLORS['Focused']},
+    {label: 'Standard', color: SEG_COLORS['Standard']},
+    {label: 'Other', color: SEG_COLORS['Other']},
+  ];
+  legendItems.forEach(it => {
+    html += `<rect x="${legendX}" y="${legendY}" width="11" height="11" fill="${it.color}" rx="2"/>`;
+    html += `<text x="${legendX+16}" y="${legendY+9}" font-size="10" fill="var(--text-med)" font-weight="700">${it.label}</text>`;
+    legendX += 18 + (it.label.length * 6.2);
+  });
+  html += `<circle cx="${legendX+6}" cy="${legendY+6}" r="4" fill="#fff" stroke="var(--rose)" stroke-width="2"/>`;
+  html += `<text x="${legendX+15}" y="${legendY+9}" font-size="10" fill="var(--rose)" font-weight="700">AI Leads</text>`;
+
+  // Leads line
+  let linePath = '';
+  series.forEach((s, i) => {
+    const x = xCenter(i), y = yLeads(s.leads);
+    linePath += (i === 0 ? `M ${x} ${y}` : ` L ${x} ${y}`);
+  });
+  html += `<path d="${linePath}" fill="none" stroke="var(--rose)" stroke-width="2.5" />`;
+  series.forEach((s, i) => {
+    const x = xCenter(i), y = yLeads(s.leads);
+    html += `<circle cx="${x}" cy="${y}" r="4" fill="#fff" stroke="var(--rose)" stroke-width="2.5"/>`;
+  });
+
+  // X labels
+  const xLabelStep = Math.max(1, Math.ceil(n / 12));
+  series.forEach((s, i) => {
+    if (i % xLabelStep !== 0 && i !== n-1) return;
+    html += `<text x="${xCenter(i)}" y="${H - padB + 18}" text-anchor="middle" font-size="10" fill="#475569" font-weight="600">${s.label}</text>`;
+  });
+  html += `<text x="${padL-44}" y="${padT-8}" font-size="10" fill="var(--teal)" font-weight="800" letter-spacing="1.5">SPEND</text>`;
+  html += `<text x="${W-padR+44}" y="${padT-8}" text-anchor="end" font-size="10" fill="var(--rose)" font-weight="800" letter-spacing="1.5">LEADS</text>`;
+
+  svg.innerHTML = html;
+
+  // Wire hover tooltip
+  const tooltip = document.getElementById('trendTooltip');
+  const wrap = document.getElementById('trendChartWrap');
+  svg.querySelectorAll('.trend-hover').forEach(el => {
+    el.addEventListener('mouseenter', (e) => {
+      const idx = +el.dataset.idx;
+      const s = series[idx];
+      let rows = '';
+      for (const seg of ['Tata','SM Post','Focused','Standard','Other']) {
+        const v = s.spend_by_seg[seg] || 0;
+        if (v > 0) {
+          rows += `<div class="tt-row"><span class="k"><span class="dot" style="background:${SEG_COLORS[seg]}"></span>${seg}</span><span class="v">${fmtINR(v)}</span></div>`;
+        }
+      }
+      tooltip.innerHTML = `
+        <div class="tt-title">${escapeHtml(s.label)}</div>
+        ${rows}
+        <div class="tt-row" style="border-top:1px solid rgba(255,255,255,0.2);margin-top:4px;padding-top:6px;"><span class="k">Total Spend</span><span class="v">${fmtINR(s.spend)}</span></div>
+        <div class="tt-row"><span class="k"><span class="dot" style="background:var(--rose)"></span>AI Leads</span><span class="v">${fmtNum(s.leads)}</span></div>
+      `;
+      tooltip.classList.add('show');
+    });
+    el.addEventListener('mousemove', (e) => {
+      const rect = wrap.getBoundingClientRect();
+      tooltip.style.left = (e.clientX - rect.left) + 'px';
+      tooltip.style.top  = (e.clientY - rect.top - 12) + 'px';
+    });
+    el.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+  });
+
+  document.getElementById('trendSub').textContent = `Dual-axis · ${bucket === 'month' ? 'Month-on-Month' : 'Week-on-Week'} · Spend stacked by campaign segment (Tata · SM Post · Focused · Standard · Other) + AI Leads line · hover for breakdown`;
+}
+
+// ===== Customer Journey table =====
+function renderJourney(d) {
+  const idSet = new Set(d.sale_ids || []);
+  const rows = (DATA.journey || []).filter(r => idSet.has(r.id));
+  rows.sort((a,b) => (a.sale_iso < b.sale_iso ? 1 : -1));
+  const maxT = DATA.max_touches || 4;
+
+  // Build header dynamically based on max touchpoints
+  const thead = document.getElementById('journeyTheadRow');
+  let headHTML = `<th>Sr.No</th><th>Customer Mobile</th><th>Customer Name</th>`;
+  for (let i = 1; i <= maxT; i++) {
+    headHTML += `<th>TP${i} Tag</th><th>TP${i} Timestamp</th>`;
+  }
+  headHTML += `<th>Sale Date</th><th>Plan</th>`;
+  thead.innerHTML = headHTML;
+
+  document.getElementById('journeyCount').textContent = `${rows.length} sale${rows.length===1?'':'s'}`;
+
+  const tbody = document.getElementById('journeyTbody');
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="${3 + maxT*2 + 2}" style="text-align:center;color:var(--text-muted);font-style:italic;padding:24px;">No sales match the current filters.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map((r, i) => {
+    let touchCells = '';
+    for (let j = 0; j < maxT; j++) {
+      const t = r.touches[j];
+      if (t) {
+        touchCells += `<td class="pa" style="font-weight:700;color:var(--teal-dark);">${escapeHtml(t.tag)}</td><td class="dt">${escapeHtml(t.ts)}</td>`;
+      } else {
+        touchCells += `<td class="pa" style="color:var(--text-muted);">—</td><td class="dt" style="color:var(--text-muted);">—</td>`;
+      }
+    }
+    return `<tr>
+      <td class="idx">${i+1}</td>
+      <td class="ph">${escapeHtml(r.phone || '—')}</td>
+      <td class="nm">${escapeHtml(r.name || '—')}</td>
+      ${touchCells}
+      <td class="dt" style="font-weight:600;">${escapeHtml(r.sale_ts || '—')}</td>
+      <td class="pl">${escapeHtml(r.plan || '—')}</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportJourney() {
+  const d = computeSlice();
+  const idSet = new Set(d.sale_ids || []);
+  const rows = (DATA.journey || []).filter(r => idSet.has(r.id));
+  rows.sort((a,b) => (a.sale_iso < b.sale_iso ? 1 : -1));
+  const maxT = DATA.max_touches || 4;
+  const headers = ['Sr.No', 'Customer Mobile', 'Customer Name'];
+  for (let i = 1; i <= maxT; i++) {
+    headers.push(`TP${i} Tag`, `TP${i} Timestamp`);
+  }
+  headers.push('Sale Date', 'Plan');
+  const data = rows.map((r, i) => {
+    const row = [i+1, r.phone, r.name];
+    for (let j = 0; j < maxT; j++) {
+      const t = r.touches[j];
+      row.push(t ? t.tag : '', t ? t.ts : '');
+    }
+    row.push(r.sale_ts, r.plan);
+    return row;
+  });
+  downloadCSV(`hopcharge_customer_journey_${state.period}.csv`, headers, data);
+}
+
+
+document.getElementById('pathSelect').addEventListener('change', (e) => {
+  state.selectedPath = (e.target.value === '__ALL__') ? null : e.target.value;
+  render();
+});
+document.getElementById('pathClear').addEventListener('click', () => { state.selectedPath = null; render(); });
+document.getElementById('firstSrcSelect').addEventListener('change', (e) => {
+  state.selectedFirstSrc = (e.target.value === '__ALL__') ? null : e.target.value;
+  render();
+});
+document.getElementById('firstSrcClear').addEventListener('click', () => { state.selectedFirstSrc = null; render(); });
+
+function csvEscape(v) {
+  if (v === null || v === undefined) return '';
+  const s = String(v);
+  if (s.includes(',') || s.includes('"') || s.includes('\n')) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+function downloadCSV(filename, headers, rows) {
+  const lines = [headers.map(csvEscape).join(',')];
+  rows.forEach(r => lines.push(r.map(csvEscape).join(',')));
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 100);
+}
+function exportSalesByFirstSrc() {
+  const d = computeSlice();
+  const idSet = new Set(d.sale_ids || []);
+  let rows = (DATA.sales || []).filter(s => idSet.has(s.id));
+  if (state.selectedFirstSrc) rows = rows.filter(r => r.first_src === state.selectedFirstSrc);
+  rows.sort((a,b) => (a.date_iso < b.date_iso ? 1 : -1));
+  const headers = ['#','Name','Phone Number','Plan','Sale Date','First Touch','First Source','Path','Segment','Type of Sale','Plan Value (₹)'];
+  const data = rows.map((r, i) => [i+1, r.name, r.phone, r.plan, r.date, r.first_touch, r.first_src, r.path, r.tata, r.type_of_sale, r.plan_value || 0]);
+  downloadCSV(`hopcharge_sales_by_first_source_${state.period}.csv`, headers, data);
+}
+function exportVS() {
+  const d = computeSlice();
+  const cols = [
+    { key: 'Tata',     leads: d.tata_leads,    sales: d.tata_sales,    spend: state.camp === 'Tata' ? d.spend : (state.camp === 'All' ? d.tata_spend : 0),    value: d.tata_sales_value },
+    { key: 'Non-Tata', leads: d.nontata_leads, sales: d.nontata_sales, spend: state.camp === 'Tata' ? 0 : (state.camp === 'All' ? d.nontata_spend : d.spend), value: d.nontata_sales_value },
+  ];
+  const headers = ['Segment','Spend (₹)','Leads','Sales','Sales Value (₹)','ROAS','Lead→Sale %','Cost / Lead (₹)'];
+  const rows = cols.map(c => [
+    c.key, c.spend.toFixed(2), c.leads, c.sales, c.value.toFixed(2),
+    c.spend ? (c.value/c.spend).toFixed(2) : '0',
+    c.leads ? ((c.sales/c.leads)*100).toFixed(2) : '0',
+    c.leads && c.spend ? (c.spend/c.leads).toFixed(2) : '0'
+  ]);
+  downloadCSV(`hopcharge_tata_vs_nontata_${state.period}.csv`, headers, rows);
+}
+document.querySelectorAll('.csv-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const t = btn.dataset.target;
+    if (t === 'firstsrc') exportSalesByFirstSrc();
+    else if (t === 'vs') exportVS();
+    else if (t === 'journey') exportJourney();
+  });
+});
+
+// ===== Main render =====
+function render() {
+  const d = computeSlice();
+  renderKPIs(d);
+  renderWaterfall(d);
+  renderDonut(d);
+  renderDonutLocation(d);
+  renderVS(d);
+  renderFirstSrc(d);
+  renderSales2(d);
+  renderPaths(d);
+  renderPlanDonuts(d);
+  renderJourney(d);
+  renderTrend();
+}
+
+// ===== init() — runs once DATA is available =====
+function init() {
+  WINDOW_START = new Date(DATA.data_window.min);
+  WINDOW_END   = new Date(DATA.data_window.max);
+  WINDOW_DAYS  = Math.round((WINDOW_END - WINDOW_START) / 86400000);
+
+  state.sliderStartDays = 0;
+  state.sliderEndDays   = WINDOW_DAYS;
+
+  sliderMin.max = WINDOW_DAYS; sliderMax.max = WINDOW_DAYS;
+  sliderMin.value = 0; sliderMax.value = WINDOW_DAYS;
+
+  buildFilters();
+  updateSliderUI();
+  syncSliderToPeriod();
+  render();
+
+  window.addEventListener('resize', () => renderTrend());
+}
+
+// ===== Bootstrap =====
+async function loadDashboardData() {
+  // Loading screen
+  const loadEl = document.createElement('div');
+  loadEl.id = 'hc-loading';
+  loadEl.style.cssText = 'position:fixed;inset:0;background:#0a2540;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:9999;';
+  loadEl.innerHTML = `
+    <div style="color:#2dd4bf;font-size:10px;font-weight:800;letter-spacing:3px;">HOPCHARGE</div>
+    <div style="color:#fff;font-size:22px;font-weight:700;font-family:Georgia,serif;">Loading dashboard…</div>
+    <div style="color:#94a3b8;font-size:13px;">Fetching live data</div>
+    <div style="width:180px;height:3px;background:#1e3a5f;border-radius:2px;overflow:hidden;margin-top:4px;">
+      <div style="height:100%;background:linear-gradient(90deg,#0d9488,#2dd4bf);animation:hcslide 1.2s ease-in-out infinite alternate;border-radius:2px;width:55%;"></div>
+    </div>
+    <style>@keyframes hcslide{from{margin-left:0}to{margin-left:45%}}</style>
+  `;
+  document.body.prepend(loadEl);
+
+  try {
+    const resp = await fetch(WEB_APP_URL + '?_=' + Date.now(), { cache: 'no-store' });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    DATA = await resp.json();
+    if (DATA.error) throw new Error(DATA.error);
+    window.DATA = DATA;
+    loadEl.remove();
+    init();
+  } catch (err) {
+    loadEl.remove();
+    document.body.innerHTML =
+      '<div style="padding:60px 40px;font-family:system-ui;text-align:center;">' +
+      '<div style="font-size:48px;margin-bottom:16px;">⚠️</div>' +
+      '<h2 style="color:#b91c1c;margin-bottom:12px;">Could not load dashboard data</h2>' +
+      '<p style="color:#475569;background:#f1f5f9;padding:12px 20px;border-radius:6px;display:inline-block;font-family:monospace;">' + String(err) + '</p>' +
+      '<p style="color:#64748b;margin-top:20px;max-width:520px;margin-left:auto;margin-right:auto;">Make sure the Apps Script Web App is deployed with <strong>Access: Anyone</strong>, and that <code>WEB_APP_URL</code> at the top of this file points to the correct <code>/exec</code> endpoint.</p>' +
+      '</div>';
+  }
+}
+
+loadDashboardData();
+</script>
