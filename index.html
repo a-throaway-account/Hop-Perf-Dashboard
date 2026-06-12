@@ -532,7 +532,7 @@
 </div>
 
 <script>
-const WEB_APP_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnSkdM-igWfjJ3Dn-KqhdpCW7qCnEy-UV0u8-Iz28lrv-DMhDMPV9mVr6WRisEPxqHmkk1gh7-h1KSn0NnzLYog6lry5p65rZceztxZXPp6sfBtenlF3PNeusap0O6XAeDt7QE3xw5ULh6YKCN1uUCwIZYmHSWA4bFXDuKVkBVntYC1yHTPWHwyZQZOKDnyxPhB9oyKyHN1J79NsBLyhshKLHPoHWIG7qiyWKaQ5mKf1OlisZSvWhvYn7uUAo0E8EDAGPClXhGtfzZ9OFeTBVWnI2knGKF30N4NfB7QJbGKgwgJFGFg&lib=Moh_g5u5kQkSisClahPjw9PiYzm_76_na";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzuO1Y1-3pNRNfMqc9mkbU0BaNAHPD7zdN3fEEviETIbAv_FSdTc9-MkNavfHUhlNEttw/exec";
 
 let DATA = null;
 
@@ -694,7 +694,7 @@ function computeSlice() {
   let tata_leads=0, nontata_leads=0;
   let loc_ncr=0, loc_outside=0, loc_unk=0;
   let p1_leads=0;
-  for (const r of DATA.leads_daily) {
+  for (const r of DATA.ads_daily) {
     if (r.date < startStr || r.date > endStr) continue;
     if (state.location !== 'Overall' && r.loc !== state.location) continue;
     if (state.qual !== 'All' && r.qual !== state.qual) continue;
@@ -712,7 +712,7 @@ function computeSlice() {
 
   // Renewals — date only
   let renewals = 0;
-  for (const r of DATA.renewals_daily) {
+  for (const r of DATA.sales) {
     if (r.date < startStr || r.date > endStr) continue;
     renewals++;
   }
@@ -1187,7 +1187,7 @@ function renderTrend() {
     }
     buckets[k].spend_by_seg[r.seg] = (buckets[k].spend_by_seg[r.seg] || 0) + r.spend;
   }
-  for (const r of DATA.leads_daily) {
+  for (const r of DATA.ads_daily) {
     if (r.date < startStr || r.date > endStr) continue;
     if (state.location !== 'Overall' && r.loc !== state.location) continue;
     if (state.qual !== 'All' && r.qual !== state.qual) continue;
@@ -1482,8 +1482,8 @@ function render() {
 
 // ===== init() — runs once DATA is available =====
 function init() {
-  WINDOW_START = new Date(DATA.data_window.min);
-  WINDOW_END   = new Date(DATA.data_window.max);
+  WINDOW_START = new Date(DATA.period_bounds.till_date.start);
+  WINDOW_END   = new Date(DATA.period_bounds.till_date.end);
   WINDOW_DAYS  = Math.round((WINDOW_END - WINDOW_START) / 86400000);
 
   state.sliderStartDays = 0;
